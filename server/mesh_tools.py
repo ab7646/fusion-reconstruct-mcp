@@ -354,11 +354,37 @@ def render_orthographic_views(file_path: str, out_dir: str | None = None) -> dic
     center = (bbox_min + bbox_max) / 2
     radius = float(np.linalg.norm(bbox_max - bbox_min)) / 2 or 1.0
 
+    # Per-triangle flat shading from face normals, and NO drawn edges. Earlier
+    # this drew every triangle's boundary (edgecolor set, real linewidth) -
+    # readable on a simple synthetic test box, but on any mesh with a few
+    # thousand+ triangles (i.e. most real STL/3MF files) the internal
+    # tessellation edges dominate the image as confusing crossing lines that
+    # look like extra geometry. Shading alone reads the actual 3D form.
+    #
+    # The light is camera-relative (recomputed per view from its elev/azim),
+    # not fixed in world space - a fixed light leaves whichever face an
+    # orthographic view is actually looking at dimly lit unless the camera
+    # happens to be near the light direction. A small fixed top-down fill
+    # light is blended in just to keep flat, camera-facing surfaces from
+    # looking perfectly uniform.
+    base_color = np.array([0.72, 0.72, 0.75])
+    fill_light = np.array([0.0, 0.0, 1.0])
+
     paths = {}
     for name, (elev, azim) in views.items():
+        elev_r, azim_r = np.radians(elev), np.radians(azim)
+        key_light = np.array(
+            [np.cos(elev_r) * np.cos(azim_r), np.cos(elev_r) * np.sin(azim_r), np.sin(elev_r)]
+        )
+        brightness = 0.75 * np.clip(mesh.face_normals @ key_light, 0, 1) + 0.25 * np.clip(
+            mesh.face_normals @ fill_light, 0, 1
+        )
+        brightness = np.clip(brightness, 0.35, 1.0)
+        face_colors = np.clip(base_color[None, :] * brightness[:, None], 0, 1)
+
         fig = plt.figure(figsize=(5, 5), dpi=150)
         ax = fig.add_subplot(111, projection="3d")
-        collection = Poly3DCollection(mesh.triangles, facecolor="#c9c9c9", edgecolor="#404040", linewidths=0.15)
+        collection = Poly3DCollection(mesh.triangles, facecolors=face_colors, edgecolor="none")
         ax.add_collection3d(collection)
         ax.set_xlim(center[0] - radius, center[0] + radius)
         ax.set_ylim(center[1] - radius, center[1] + radius)
