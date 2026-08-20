@@ -126,6 +126,15 @@ def fusion_revolve(
     )
 
 
+def fusion_loft(profiles: list[dict], operation: str = "new_body", target_body_id: str | None = None) -> dict:
+    """Loft through 2+ sketch profiles to build a shape that tapers/morphs
+    between cross-sections, e.g. a wedge or a rounded-to-square transition -
+    use this instead of extrude when the profile isn't constant along its
+    length. Each entry in `profiles` is {"sketch_id": ..., "profile_index": ...},
+    given in loft order (they don't need to be parallel planes)."""
+    return call("loft", profiles=profiles, operation=operation, target_body_id=target_body_id)
+
+
 def fusion_add_fillet(body_id: str, edge_selector: dict, radius_mm: float) -> dict:
     """Round edges with a fillet.
 

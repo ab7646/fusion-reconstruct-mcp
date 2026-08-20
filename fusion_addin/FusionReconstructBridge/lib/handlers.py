@@ -375,6 +375,37 @@ def revolve(
     }
 
 
+def loft(profiles: list, operation: str = "new_body", target_body_id: str = None) -> dict:
+    """Loft through 2+ sketch profiles, in order. Each entry in `profiles` is
+    {"sketch_id": ..., "profile_index": ...}. Use this for a shape that
+    tapers/morphs between cross-sections at different planes (a wedge, a
+    rounded-to-square transition...) rather than a constant extrude."""
+    if len(profiles) < 2:
+        raise ValueError("loft needs at least 2 profiles")
+
+    root = _root()
+    lofts = root.features.loftFeatures
+    loft_input = lofts.createInput(_op_enum(operation))
+    for entry in profiles:
+        sketch = _resolve_sketch(entry["sketch_id"])
+        idx = entry["profile_index"]
+        if idx < 0 or idx >= sketch.profiles.count:
+            raise ValueError(f"sketch {entry['sketch_id']} has {sketch.profiles.count} profile(s), no index {idx}")
+        loft_input.loftSections.add(sketch.profiles.item(idx))
+
+    if operation != "new_body":
+        if not target_body_id:
+            raise ValueError(f"operation={operation!r} requires target_body_id")
+        loft_input.participantBodies = [_resolve_body(target_body_id)]
+
+    feature = lofts.add(loft_input)
+    body = feature.bodies.item(0) if feature.bodies.count else None
+    return {
+        "feature_id": feature.entityToken,
+        "body_id": body.entityToken if body else target_body_id,
+    }
+
+
 def add_fillet(body_id: str, edge_selector: dict, radius_mm: float) -> dict:
     body = _resolve_body(body_id)
     edges = _select_edges(body, edge_selector)
@@ -591,6 +622,7 @@ ACTIONS = {
     "list_sketch_profiles": list_sketch_profiles,
     "extrude": extrude,
     "revolve": revolve,
+    "loft": loft,
     "add_fillet": add_fillet,
     "add_chamfer": add_chamfer,
     "pattern_rectangular": pattern_rectangular,

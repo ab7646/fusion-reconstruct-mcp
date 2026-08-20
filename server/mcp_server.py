@@ -64,6 +64,7 @@ _FUSION_TOOLS = [
     fusion_tools.fusion_list_sketch_profiles,
     fusion_tools.fusion_extrude,
     fusion_tools.fusion_revolve,
+    fusion_tools.fusion_loft,
     fusion_tools.fusion_add_fillet,
     fusion_tools.fusion_add_chamfer,
     fusion_tools.fusion_pattern_rectangular,
