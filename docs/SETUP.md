@@ -18,10 +18,14 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Sanity-check it (no Fusion needed for this part):
+Sanity-check it (no Fusion needed for this part). The smoke test builds its own
+synthetic test part via a boolean op, which needs one extra dependency beyond the
+runtime requirements:
 
 ```bash
+pip install -r requirements-dev.txt
 python tests/smoke_test_mesh_tools.py
+python tests/smoke_test_mcp_server.py
 ```
 
 ## 2. Fusion 360 add-in

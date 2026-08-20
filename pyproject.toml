@@ -22,7 +22,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+# manifold3d is only needed by tests/smoke_test_mesh_tools.py, to build its
+# synthetic test part via boolean ops - mesh_tools.py itself never does
+# boolean operations, so this is a test-only dependency, not a runtime one.
+dev = ["pytest>=8.0", "manifold3d>=2.3"]
 
 [project.scripts]
 fusion-reconstruct-mcp = "server.mcp_server:main"

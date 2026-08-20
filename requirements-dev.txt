@@ -1,0 +1,5 @@
+-r requirements.txt
+pytest>=8.0
+# Only needed to build tests/smoke_test_mesh_tools.py's synthetic test part
+# (box.difference/.union) - mesh_tools.py itself never does boolean ops.
+manifold3d>=2.3
