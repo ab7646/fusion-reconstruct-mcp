@@ -312,7 +312,9 @@ def get_cross_section(
 
     section = mesh.section(plane_origin=origin, plane_normal=normal)
     if section is None:
-        return _to_native({"origin": origin, "normal": normal, "polygons": [], "note": "Plane does not intersect the mesh."})
+        return _to_native(
+            {"origin": origin, "normal": normal, "num_polygons": 0, "polygons": [], "note": "Plane does not intersect the mesh."}
+        )
 
     planar, to_3d = section.to_planar()
     u, v = _plane_basis(normal)
