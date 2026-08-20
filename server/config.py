@@ -13,7 +13,12 @@ FUSION_BRIDGE_TIMEOUT_S = float(os.environ.get("FUSION_BRIDGE_TIMEOUT_S", "30"))
 
 # Renders / exports written by mesh_tools.py so the LLM (via its own vision, not
 # this server) or the user can inspect them.
+#
+# Deliberately NOT named anything close to "fusion-reconstruct-mcp" (e.g. a
+# dot-prefixed version of the repo name) - that one-character difference is
+# exactly the kind of thing a person copy-pasting `cd` commands mixes up with
+# the actual repo checkout.
 SCRATCH_DIR = os.environ.get(
     "FUSION_RECONSTRUCT_SCRATCH",
-    os.path.join(os.path.expanduser("~"), ".fusion-reconstruct-mcp", "scratch"),
+    os.path.join(os.path.expanduser("~"), ".cache", "fusion-reconstruct-mcp-scratch"),
 )
