@@ -305,9 +305,9 @@ def extrude(
     if operation != "new_body":
         if not target_body_id:
             raise ValueError(f"operation={operation!r} requires target_body_id")
-        participants = adsk.core.ObjectCollection.create()
-        participants.add(_resolve_body(target_body_id))
-        ext_input.participantBodies = participants
+        # participantBodies binds to a std::vector, not an ObjectCollection -
+        # a plain Python list is required here.
+        ext_input.participantBodies = [_resolve_body(target_body_id)]
     if taper_angle_deg:
         ext_input.taperAngle = adsk.core.ValueInput.createByString(f"{taper_angle_deg} deg")
     ext_input.setDistanceExtent(symmetric, adsk.core.ValueInput.createByString(f"{distance_mm} mm"))
@@ -344,9 +344,7 @@ def revolve(
     if operation != "new_body":
         if not target_body_id:
             raise ValueError(f"operation={operation!r} requires target_body_id")
-        participants = adsk.core.ObjectCollection.create()
-        participants.add(_resolve_body(target_body_id))
-        rev_input.participantBodies = participants
+        rev_input.participantBodies = [_resolve_body(target_body_id)]
     rev_input.setAngleExtent(False, adsk.core.ValueInput.createByString(f"{angle_deg} deg"))
 
     feature = revolves.add(rev_input)
