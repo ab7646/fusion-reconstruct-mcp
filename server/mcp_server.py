@@ -25,6 +25,13 @@ Recommended workflow for a mesh file:
    cylindrical pads; list_planar_facets for large flat regions (walls, ribs).
 4. For each major shape, pick a base plane or use get_cross_section at the
    relevant Z (or other) height to get the exact 2D profile to sketch.
+   get_cross_section only traces the *outer* boundary at that one slice - it
+   will not reveal a step hidden between two sampled heights, or a fully
+   enclosed internal void. Before assuming a region is a constant/simply-
+   tapering solid (e.g. before lofting a wedge to fill it), sample several
+   heights close together and spot-check a few points with check_solid; a
+   sudden unexpected area/volume jump is a real feature you haven't sketched
+   yet, not sampling noise.
 5. fusion_new_document, then rebuild feature by feature: fusion_create_sketch
    (reuse the origin/normal from get_cross_section for non-base planes) ->
    sketch_add_* -> fusion_list_sketch_profiles -> fusion_extrude/revolve ->
@@ -50,6 +57,7 @@ _MESH_TOOLS = [
     mesh_tools.find_circular_faces,
     mesh_tools.get_cross_section,
     mesh_tools.render_orthographic_views,
+    mesh_tools.check_solid,
     mesh_tools.compare_meshes,
 ]
 

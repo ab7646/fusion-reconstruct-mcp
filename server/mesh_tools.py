@@ -423,6 +423,26 @@ def render_orthographic_views(file_path: str, out_dir: str | None = None) -> dic
     return {"out_dir": out_dir, "views": paths}
 
 
+def check_solid(file_path: str, points: list[list[float]]) -> list[dict]:
+    """For each (x, y, z) point (mm), report whether it's inside the solid or
+    outside it (mesh.contains, ray-casting based).
+
+    get_cross_section only ever traces the *outer* boundary at a given slice
+    - it will not notice a fully-enclosed internal cavity that doesn't touch
+    that boundary, and can misreport a shape as constant-cross-section when
+    it actually has a void or a step hidden inside. Before assuming a region
+    is solid (e.g. before extruding a wedge/loft to fill it), spot-check a
+    few points inside that assumed volume with this function. Cross-checking
+    with a second point just off any axis-aligned coordinate is a good idea:
+    a ray fired exactly through a mesh edge/vertex can mis-count and give a
+    wrong answer for that exact point.
+    """
+    mesh = _load_mesh(file_path)
+    pts = np.array(points, dtype=float)
+    inside = mesh.contains(pts)
+    return _to_native([{"point": p, "is_solid": bool(v)} for p, v in zip(points, inside)])
+
+
 def compare_meshes(original_path: str, candidate_path: str, sample_count: int = 5000) -> dict:
     """Compare a reconstructed model (exported from Fusion as STL) against the
     original mesh: volume/bounding-box deltas plus an approximate two-sided

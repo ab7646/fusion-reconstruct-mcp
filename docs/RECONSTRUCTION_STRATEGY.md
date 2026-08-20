@@ -39,7 +39,32 @@ produce a worse, less editable result than just leaving the mesh as a mesh.
    `verdict: "needs_refinement"` plus a large `surface_distance_mm.max_overall` tells you
    *that* something's off; cross-reference against `render_orthographic_views` /
    `fusion_screenshot` to see *what*. Iterate on the specific feature that's diverging,
-   don't restart.
+   don't restart. **Check `volume_delta_pct` too, not just surface distance** - a body
+   that's mostly the right shape but has one region solid where the original doesn't (or
+   vice versa) can still score a deceptively low surface distance while being tens of
+   percent off in volume, because that error is buried inside the shape rather than on
+   its visible boundary.
+
+### Don't assume constant/smoothly-tapering cross-sections
+
+`get_cross_section` only traces the *outer* boundary at the one plane you asked for. It
+will not warn you if the shape actually steps, or has a fully-enclosed internal void,
+between two heights you didn't sample - it'll just look like a smooth trend if you only
+sample every 10-50mm. Concretely, on a real bracket this produced: (a) a step from 60mm
+to 35mm to 18mm that looked smooth-ish when sampled every ~7-49mm apart, leading to a
+wrong loft that split the difference everywhere in between; and (b) an apparent
+fully-enclosed cavity that turned out to be a duplicate-face artifact at one exact Y
+value, indistinguishable from a real cavity without an independent check.
+
+Before committing to "this region is solid/constant between height A and B":
+- Sample `get_cross_section` at several closely-spaced heights (every 2-5mm across a
+  suspect span, not just at the two ends) - a sudden area jump between adjacent samples
+  is a step, not noise.
+- Use **`check_solid`** to spot-check a handful of 3D points inside the volume you're
+  about to fill (or believe is hollow). It uses ray-casting (`trimesh`'s `contains`),
+  independent of `get_cross_section`'s boundary-tracing, so it won't share the same
+  blind spots. If a single point gives a surprising answer, check a second point offset
+  by a fraction of a mm - a ray fired exactly through a mesh edge/vertex can mis-count.
 
 For a **reference photo** instead of a mesh: there is no dimension ground truth. State
 your assumptions explicitly ("assuming a 50 mm base width"), build a first pass, take a
