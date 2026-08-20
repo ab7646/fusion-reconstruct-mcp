@@ -1,0 +1,13 @@
+{
+    "autodeskProduct": "Fusion360",
+    "type": "addin",
+    "author": "Adi Glikman",
+    "description": {
+        "": "Local HTTP bridge (127.0.0.1:6172) that lets an MCP-connected LLM drive Fusion 360's parametric modeling API to reconstruct STL/3MF meshes as feature-based models."
+    },
+    "editEnabled": true,
+    "iconFilename": "",
+    "id": "FusionReconstructBridge",
+    "supportedOS": "windows|mac",
+    "version": "1.0.0"
+}

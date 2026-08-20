@@ -1,0 +1,35 @@
+[project]
+name = "fusion-reconstruct-mcp"
+version = "0.1.0"
+description = "MCP server that lets an LLM reconstruct STL/3MF meshes (or a reference photo) as parametric Fusion 360 features, via a companion Fusion 360 add-in."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Adi Glikman" }]
+keywords = ["mcp", "fusion360", "cad", "3d-printing", "stl", "3mf", "reverse-engineering", "parametric-modeling"]
+
+dependencies = [
+    "mcp>=2.0.0",
+    "trimesh>=4.4.0",
+    "shapely>=2.0",
+    "rtree>=1.2",
+    "numpy>=1.26",
+    "scipy>=1.12",
+    "networkx>=3.2",
+    "matplotlib>=3.8",
+    "requests>=2.31",
+    "Pillow>=10.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+fusion-reconstruct-mcp = "server.mcp_server:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["server*"]

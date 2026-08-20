@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+*.log
+
+# Fusion 360 add-in runtime artifacts
+fusion_addin/**/*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Scratch / local test assets
+tests/fixtures/generated/
+*.stl.tmp

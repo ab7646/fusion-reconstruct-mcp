@@ -1,0 +1,10 @@
+mcp>=2.0.0
+trimesh>=4.4.0
+shapely>=2.0
+rtree>=1.2
+numpy>=1.26
+scipy>=1.12
+networkx>=3.2
+matplotlib>=3.8
+requests>=2.31
+Pillow>=10.0
