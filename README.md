@@ -88,10 +88,15 @@ dimension data in a single photo, so treat that path as "assisted modeling," not
   dependency) - good enough to see overall shape, not photorealistic, and can show minor
   z-ordering artifacts on complex parts.
 - One Fusion document/bridge connection at a time.
-- Built and smoke-tested against `mcp>=2.0.0`'s `MCPServer` API; the Fusion-side code is
-  written against the documented `adsk.fusion` API but (for obvious reasons - it has to
-  run inside licensed, GUI Fusion 360) hasn't been exercised inside a live Fusion session
-  by CI. Issues/PRs against `fusion_addin/` very welcome.
+- Built and smoke-tested against `mcp>=2.0.0`'s `MCPServer` API. The Fusion-side actions
+  have all been exercised against a real, running Fusion 360 session (not just written
+  against the docs) - see `tests/smoke_test_fusion_live.py` (sketch → extrude →
+  cut/join → export, verified against the original mesh to within 0.01mm) and
+  `tests/smoke_test_fusion_live_features.py` (fillet, chamfer, mirror, circular
+  pattern, revolve, explicit combine). `sketch_add_line`, `sketch_add_arc_three_point`
+  and `pattern_rectangular` share code paths with tested siblings but don't have their
+  own dedicated live test yet. None of this runs in CI (there's no headless Fusion) -
+  issues/PRs against `fusion_addin/` very welcome regardless.
 
 ## License
 

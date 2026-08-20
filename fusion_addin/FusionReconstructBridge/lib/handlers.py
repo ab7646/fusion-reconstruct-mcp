@@ -330,14 +330,20 @@ def revolve(
     target_body_id: str = None,
 ) -> dict:
     sketch = _resolve_sketch(sketch_id)
-    if profile_index < 0 or profile_index >= sketch.profiles.count:
-        raise ValueError(f"sketch {sketch_id} has {sketch.profiles.count} profile(s), no index {profile_index}")
-    profile = sketch.profiles.item(profile_index)
 
+    # Add the axis line *before* looking up the profile: adding any new curve
+    # to a sketch makes Fusion recompute its profiles collection, which
+    # invalidates a Profile object obtained beforehand ("invalid profile(s)
+    # for Revolve Feature"). profile_index still refers to the same region
+    # afterwards, since a construction line doesn't add a new bounded region.
     axis_line = sketch.sketchCurves.sketchLines.addByTwoPoints(
         _point_mm(axis_start[0], axis_start[1]), _point_mm(axis_end[0], axis_end[1])
     )
     axis_line.isConstruction = True
+
+    if profile_index < 0 or profile_index >= sketch.profiles.count:
+        raise ValueError(f"sketch {sketch_id} has {sketch.profiles.count} profile(s), no index {profile_index}")
+    profile = sketch.profiles.item(profile_index)
 
     revolves = _root().features.revolveFeatures
     rev_input = revolves.createInput(profile, axis_line, _op_enum(operation))
