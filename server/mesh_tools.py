@@ -20,6 +20,7 @@ usually a sign the source file used a different unit.
 
 from __future__ import annotations
 
+import math
 import os
 import uuid
 from typing import Any
@@ -161,7 +162,11 @@ def list_planar_facets(file_path: str, min_area: float = 1.0) -> list[dict]:
 
 
 def find_circular_holes(
-    file_path: str, min_radius: float = 0.3, max_circularity_error: float = 0.04, min_loop_points: int = 8
+    file_path: str,
+    min_radius: float = 0.3,
+    max_circularity_error: float = 0.04,
+    min_loop_points: int = 8,
+    min_area: float | None = None,
 ) -> list[dict]:
     """Detect circular through-holes / blind-hole rims sitting inside a flat
     facet (e.g. a bolt hole in a plate). Each result is one inner boundary
@@ -174,10 +179,22 @@ def find_circular_holes(
     mesh have one segment per tessellation facet (a few dozen, typically),
     so requiring at least min_loop_points boundary vertices filters out
     straight-edged quads/triangles while keeping genuine circles.
+
+    min_area skips facets too small to contain a min_radius-sized hole before
+    tracing their boundary (the expensive step) - default is
+    4*pi*min_radius**2, i.e. a facet at least ~4x the hole's own area.
+    Without this, a mesh with tens of thousands of small tessellation facets
+    (common on any curved/filleted surface) makes this call slow enough to
+    time out an MCP client, since every facet's boundary gets traced
+    regardless of whether it could possibly contain a hole.
     """
     mesh = _load_mesh(file_path)
+    if min_area is None:
+        min_area = 4 * math.pi * min_radius**2
     found = []
     for i, facet in enumerate(mesh.facets):
+        if mesh.facets_area[i] < min_area:
+            continue
         normal = mesh.facets_normal[i]
         try:
             path3d = mesh.outline(facet)
@@ -222,19 +239,26 @@ def find_circular_holes(
 
 
 def find_circular_faces(
-    file_path: str, min_radius: float = 0.3, max_circularity_error: float = 0.04, min_loop_points: int = 8
+    file_path: str,
+    min_radius: float = 0.3,
+    max_circularity_error: float = 0.04,
+    min_loop_points: int = 8,
+    min_area: float | None = None,
 ) -> list[dict]:
     """Detect facets whose *entire* boundary is itself a circle - typically the
     flat top of a cylindrical boss/pad, or the flat bottom of a blind hole.
 
-    See find_circular_holes' docstring for why min_loop_points matters: a
-    plain quad's corners always lie on some circle, so a low point-count
-    "circle" is almost always a false positive from mesh tessellation, not a
-    real curved feature.
+    See find_circular_holes' docstring for why min_loop_points and min_area
+    matter (false positives from cyclic quads; timeouts from tracing every
+    facet's boundary on a mesh with tens of thousands of them).
     """
     mesh = _load_mesh(file_path)
+    if min_area is None:
+        min_area = math.pi * min_radius**2
     found = []
     for i, facet in enumerate(mesh.facets):
+        if mesh.facets_area[i] < min_area:
+            continue
         normal = mesh.facets_normal[i]
         try:
             path3d = mesh.outline(facet)
