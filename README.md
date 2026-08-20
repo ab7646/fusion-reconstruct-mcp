@@ -88,6 +88,14 @@ dimension data in a single photo, so treat that path as "assisted modeling," not
   dependency) - good enough to see overall shape, not photorealistic, and can show minor
   z-ordering artifacts on complex parts.
 - One Fusion document/bridge connection at a time.
+- `fusion_create_sketch`'s named-base-plane path (`plane="XY"/"XZ"/"YZ"`, optionally
+  `offset_mm`) is thoroughly live-verified. Its arbitrary-plane path (`origin`+`normal`)
+  had a real bug fixed (`setByThreePoints` needs point *entities*, not raw `Point3D` -
+  see git history) but was never confirmed working afterward: a second, different error
+  ("Environment is not supported" from `ConstructionPoints.add`) appeared on the next
+  attempt and went away after restarting the add-in, which looks like transient Fusion
+  state rather than a code bug, but that path was worked around rather than re-tested.
+  Treat it as unverified until someone confirms it live.
 - Built and smoke-tested against `mcp>=2.0.0`'s `MCPServer` API. The Fusion-side actions
   have all been exercised against a real, running Fusion 360 session (not just written
   against the docs) - see `tests/smoke_test_fusion_live.py` (sketch → extrude →

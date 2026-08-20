@@ -216,6 +216,13 @@ def create_sketch(
         # This basis convention (ref axis, u = n x ref, v = n x u) matches
         # mesh_tools._plane_basis() on the MCP-server side, so a plane built
         # from get_cross_section()'s origin/normal lines up the same way.
+        #
+        # setByThreePoints needs actual point *entities* (SketchPoint /
+        # ConstructionPoint / BRepVertex), not raw Point3D coordinate values -
+        # passing Point3D directly raises an opaque InternalValidationError
+        # from Fusion with no useful message. Three fixed ConstructionPoints
+        # are the simplest entities to build for this; they're left in the
+        # timeline as a (harmless) side effect of the plane they define.
         o = tuple(origin)
         n = _v_norm(tuple(normal))
         ref = (1.0, 0.0, 0.0) if abs(n[0]) < 0.9 else (0.0, 1.0, 0.0)
@@ -224,8 +231,15 @@ def create_sketch(
         p1 = o
         p2 = _v_add(o, _v_scale(u, 10.0))
         p3 = _v_add(o, _v_scale(v, 10.0))
+
+        def _construction_point(point_mm_xyz):
+            pt_input = root.constructionPoints.createInput()
+            pt_input.setByPoint(_point_mm(*point_mm_xyz))
+            return root.constructionPoints.add(pt_input)
+
+        cp1, cp2, cp3 = _construction_point(p1), _construction_point(p2), _construction_point(p3)
         plane_input = planes.createInput()
-        plane_input.setByThreePoints(_point_mm(*p1), _point_mm(*p2), _point_mm(*p3))
+        plane_input.setByThreePoints(cp1, cp2, cp3)
         construction_plane = planes.add(plane_input)
         sketch = root.sketches.add(construction_plane)
     elif offset_mm:

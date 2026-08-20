@@ -288,13 +288,23 @@ def find_circular_faces(
     return _to_native(found)
 
 
-def get_cross_section(file_path: str, plane_origin: list[float], plane_normal: list[float]) -> dict:
+def get_cross_section(
+    file_path: str, plane_origin: list[float], plane_normal: list[float], simplify_tolerance_mm: float = 0.3
+) -> dict:
     """Slice the mesh with a plane and return the resulting 2D profile(s) -
     exactly what you need to know to draw the matching Fusion sketch on that
     plane. Each polygon has an outer loop and zero or more hole loops, given
-    as 2D points in the plane's own (u, v) coordinate system, plus the 3x3
-    rotation + origin needed to place that plane in 3D (matches Fusion's
-    "construction plane from point + normal" convention)."""
+    as 2D points in the plane's own (u, v) coordinate system (same
+    plane_u_axis/plane_v_axis convention fusion_create_sketch's origin+normal
+    uses, so these coordinates drop straight into sketch_add_line/etc.).
+
+    Raw tessellation gives a mesh's cross-section thousands of near-collinear
+    points even for a simple flat-sided shape - simplify_tolerance_mm runs a
+    Douglas-Peucker simplification (points contributing less than this
+    distance to the outline are dropped) so the result is small enough to
+    read and close enough to straight-line/arc-fittable for sketching. Set
+    to 0 to get the raw, unsimplified outline instead.
+    """
     mesh = _load_mesh(file_path)
     origin = np.array(plane_origin, dtype=float)
     normal = np.array(plane_normal, dtype=float)
@@ -304,16 +314,27 @@ def get_cross_section(file_path: str, plane_origin: list[float], plane_normal: l
     if section is None:
         return _to_native({"origin": origin, "normal": normal, "polygons": [], "note": "Plane does not intersect the mesh."})
 
-    planar, transform = section.to_planar()
+    planar, to_3d = section.to_planar()
     u, v = _plane_basis(normal)
+
+    def _to_uv(points2d: np.ndarray) -> np.ndarray:
+        # planar's own 2D frame is whatever trimesh chose internally, which
+        # generally does NOT match our canonical _plane_basis(normal) - map
+        # through to_3d and back onto (u, v) so callers get coordinates
+        # consistent with fusion_create_sketch's own plane convention.
+        points3d = trimesh.transform_points(np.column_stack([points2d, np.zeros(len(points2d))]), to_3d)
+        rel = points3d - origin
+        return np.column_stack([rel @ u, rel @ v])
 
     polygons = []
     for poly in planar.polygons_full:
+        if simplify_tolerance_mm > 0:
+            poly = poly.simplify(simplify_tolerance_mm, preserve_topology=True)
         polygons.append(
             {
                 "area": float(poly.area),
-                "outer": np.array(poly.exterior.coords),
-                "holes": [np.array(ring.coords) for ring in poly.interiors],
+                "outer": _to_uv(np.array(poly.exterior.coords)),
+                "holes": [_to_uv(np.array(ring.coords)) for ring in poly.interiors],
             }
         )
 
