@@ -55,26 +55,35 @@ repo's `FusionReconstructBridge.py` (and copy the `lib/` folder alongside it).
 
 ## 3. Point your MCP client at the server
 
-Add an entry to your client's MCP config. For Claude Code, run:
+Use `run_server.py` at the repo root, invoked by its **absolute path**, rather than
+`python -m server.mcp_server`. The `-m` form only finds the `server` package if the
+process's working directory happens to be the repo root when it's launched - true from
+a terminal you've `cd`ed into, but not guaranteed (and not always configurable) when an
+MCP client spawns the command itself. `run_server.py` puts the repo root on `sys.path`
+itself, so it works regardless of the spawning process's cwd.
+
+For Claude Code:
 
 ```bash
-claude mcp add fusion-reconstruct -- /absolute/path/to/.venv/bin/python -m server.mcp_server
+claude mcp add fusion-reconstruct -- /absolute/path/to/.venv/bin/python /absolute/path/to/run_server.py
 ```
 
-(On Windows, use the `.venv\Scripts\python.exe` path.) Or add it by hand to
-`claude_desktop_config.json` / your client's `mcp.json`:
+Or add it by hand to `claude_desktop_config.json` / your client's `mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "fusion-reconstruct": {
       "command": "/absolute/path/to/fusion-reconstruct-mcp/.venv/bin/python",
-      "args": ["-m", "server.mcp_server"],
-      "cwd": "/absolute/path/to/fusion-reconstruct-mcp"
+      "args": ["/absolute/path/to/fusion-reconstruct-mcp/run_server.py"]
     }
   }
 }
 ```
+
+(On Windows, use the `.venv\Scripts\python.exe` path, and note that
+`claude_desktop_config.json` needs its backslashes escaped, e.g.
+`"C:\\Users\\you\\fusion-reconstruct-mcp\\run_server.py"`.)
 
 ## 4. Try it
 
