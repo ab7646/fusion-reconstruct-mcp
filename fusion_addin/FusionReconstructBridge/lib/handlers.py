@@ -452,6 +452,35 @@ def combine(target_body_id: str, tool_body_ids: list, operation: str = "join", k
     return {"feature_id": feature.entityToken, "body_id": target.entityToken}
 
 
+def shell(body_id: str, remove_face_indices: list = None, thickness_mm: float = 2.0, direction: str = "inside") -> dict:
+    """Hollow out a solid body. Pass remove_face_indices (from
+    get_body_info's face_index) to leave those faces open (e.g. remove the
+    top face of a box to get an open-top container); omit/empty for a fully
+    closed hollow shell."""
+    body = _resolve_body(body_id)
+    entities = adsk.core.ObjectCollection.create()
+    if remove_face_indices:
+        for idx in remove_face_indices:
+            entities.add(body.faces.item(idx))
+    else:
+        entities.add(body)
+
+    shells = _root().features.shellFeatures
+    shell_input = shells.createInput(entities, False)
+    thickness = adsk.core.ValueInput.createByString(f"{thickness_mm} mm")
+    if direction == "inside":
+        shell_input.insideThickness = thickness
+    elif direction == "outside":
+        shell_input.outsideThickness = thickness
+    elif direction == "both":
+        shell_input.bothSidesThickness = thickness
+    else:
+        raise ValueError(f"direction must be 'inside', 'outside' or 'both', got {direction!r}")
+
+    feature = shells.add(shell_input)
+    return {"feature_id": feature.entityToken, "body_id": body.entityToken}
+
+
 def set_parameter(name: str, expression: str) -> dict:
     params = _design().userParameters
     param = params.itemByName(name)
@@ -480,7 +509,16 @@ def get_body_info(body_id: str) -> dict:
     faces = []
     for i in range(body.faces.count):
         face = body.faces.item(i)
-        faces.append({"face_index": i, "area_mm2": face.area * (MM_PER_CM**2)})
+        point = face.pointOnFace
+        ok, normal = face.evaluator.getNormalAtPoint(point)
+        entry = {
+            "face_index": i,
+            "area_mm2": face.area * (MM_PER_CM**2),
+            "point_on_face_mm": [_cm_to_mm(point.x), _cm_to_mm(point.y), _cm_to_mm(point.z)],
+        }
+        if ok:
+            entry["normal"] = [normal.x, normal.y, normal.z]
+        faces.append(entry)
 
     edges = []
     for i in range(body.edges.count):
@@ -545,6 +583,7 @@ ACTIONS = {
     "pattern_circular": pattern_circular,
     "mirror": mirror,
     "combine": combine,
+    "shell": shell,
     "set_parameter": set_parameter,
     "list_parameters": list_parameters,
     "list_bodies": list_bodies,

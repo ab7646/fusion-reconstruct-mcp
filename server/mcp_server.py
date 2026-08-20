@@ -70,6 +70,7 @@ _FUSION_TOOLS = [
     fusion_tools.fusion_pattern_circular,
     fusion_tools.fusion_mirror,
     fusion_tools.fusion_combine,
+    fusion_tools.fusion_shell,
     fusion_tools.fusion_set_parameter,
     fusion_tools.fusion_list_parameters,
     fusion_tools.fusion_list_bodies,

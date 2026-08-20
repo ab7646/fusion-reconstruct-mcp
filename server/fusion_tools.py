@@ -184,6 +184,18 @@ def fusion_combine(target_body_id: str, tool_body_ids: list[str], operation: str
     return call("combine", target_body_id=target_body_id, tool_body_ids=tool_body_ids, operation=operation, keep_tools=keep_tools)
 
 
+def fusion_shell(body_id: str, thickness_mm: float, remove_face_indices: list[int] | None = None, direction: str = "inside") -> dict:
+    """Hollow out a solid body into a shell. Pass remove_face_indices (from
+    fusion_get_body_info's face_index, matched by its normal/point_on_face_mm)
+    to leave those faces open - e.g. remove the top face of a box to turn it
+    into an open-top container. Omit for a fully closed hollow shell.
+    direction: "inside" | "outside" | "both" - which way the wall thickness
+    is measured from the original surface."""
+    return call(
+        "shell", body_id=body_id, remove_face_indices=remove_face_indices, thickness_mm=thickness_mm, direction=direction
+    )
+
+
 def fusion_set_parameter(name: str, expression: str) -> dict:
     """Create (or update) a Fusion user parameter, e.g. name="wall_thickness",
     expression="3 mm". Reference it in later calls' numeric fields is not
