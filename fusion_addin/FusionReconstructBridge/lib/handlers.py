@@ -471,13 +471,20 @@ def pattern_circular(feature_id: str, axis: str = "z", quantity: int = 4, total_
     return {"feature_id": feature.entityToken}
 
 
-def mirror(feature_id: str, plane: str = "YZ") -> dict:
+def mirror(feature_id: str, plane: str = "YZ", offset_mm: float = 0.0) -> dict:
     root = _root()
     entities = adsk.core.ObjectCollection.create()
     entities.add(_resolve(feature_id))
 
+    if offset_mm:
+        plane_input = root.constructionPlanes.createInput()
+        plane_input.setByOffset(_base_plane(plane), adsk.core.ValueInput.createByString(f"{offset_mm} mm"))
+        mirror_plane = root.constructionPlanes.add(plane_input)
+    else:
+        mirror_plane = _base_plane(plane)
+
     mirrors = root.features.mirrorFeatures
-    mirror_input = mirrors.createInput(entities, _base_plane(plane))
+    mirror_input = mirrors.createInput(entities, mirror_plane)
     feature = mirrors.add(mirror_input)
     return {"feature_id": feature.entityToken}
 

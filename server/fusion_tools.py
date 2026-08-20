@@ -182,10 +182,12 @@ def fusion_pattern_circular(
     return call("pattern_circular", feature_id=feature_id, axis=axis, quantity=quantity, total_angle_deg=total_angle_deg)
 
 
-def fusion_mirror(feature_id: str, plane: str = "YZ") -> dict:
+def fusion_mirror(feature_id: str, plane: str = "YZ", offset_mm: float = 0.0) -> dict:
     """Mirror the body/feature produced by feature_id across a base plane
-    ("XY", "XZ" or "YZ")."""
-    return call("mirror", feature_id=feature_id, plane=plane)
+    ("XY", "XZ" or "YZ"), optionally offset along that plane's normal by
+    offset_mm - use this for a mirrored pair that isn't touching along the
+    mirror line (e.g. two parts with a real gap between them)."""
+    return call("mirror", feature_id=feature_id, plane=plane, offset_mm=offset_mm)
 
 
 def fusion_combine(target_body_id: str, tool_body_ids: list[str], operation: str = "join", keep_tools: bool = False) -> dict:
